@@ -611,6 +611,19 @@ body[data-tab=cards] .frow #picDel,body[data-tab=quiz] .frow #picDel{display:non
 .qmiss>b{color:#D93A6A}.qmiss small{color:#8a7fb0;font-weight:600}
 .qmr{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;background:#fff}
 .qmr .say{width:30px;height:30px}.qmr .say svg{width:15px;height:15px}
+.wno{flex:none;align-self:center;min-width:34px;padding-left:12px;font-size:.78rem;font-weight:800;color:#8a7fb0;font-variant-numeric:tabular-nums;text-align:right}
+body[data-tab=list] .wno+.word{padding-left:10px}
+.stkrow{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:8px}
+.stkrow .skc.sm{margin-top:0}
+.memc{display:inline-flex;align-items:center;gap:5px;padding:4px 10px 4px 5px;border-radius:999px;background:linear-gradient(135deg,#B9A3FF,#8B6CF6);color:#fff;font-size:.72rem;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(139,108,246,.3)}
+.memc .ico{width:19px;height:19px;padding:3px;border-radius:50%;background:rgba(255,255,255,.25)}
+.memc b{font-size:.9rem;font-weight:900}
+.qno{margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(139,108,246,.12);color:#8B6CF6;font-weight:800;font-size:.72rem}
+.pchip.sz{min-width:40px;justify-content:center}
+.rngf{display:flex;align-items:center;gap:6px}
+.rngf input{width:68px;font:inherit;font-size:16px;padding:6px 10px;border-radius:999px;border:1.5px solid #EEE6FF;background:#FBF8FF;color:#2A2346;text-align:center}
+.rngf input:focus{outline:none;border-color:#C9B6FF}
+.rngf>span{color:#8a7fb0;font-weight:800}
 /* tabs + segmented */
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
 .tabs button{background:var(--glass);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1.5px solid var(--glass-line);border-radius:999px;padding:8px 16px;font-weight:800;font-size:.92rem;color:#fff;text-shadow:0 1px 6px rgba(42,35,70,.35);transition:transform .15s}
@@ -1363,7 +1376,7 @@ var CKEY='sat-holboos-custom';
 var custom={next:1000,items:[]};
 function saveCustom(keep){if(!who)return;if(!keep)custom.v=Date.now();try{localStorage.setItem(sk(CKEY),JSON.stringify(custom));}catch(e){}}
 var shared=[];
-function rebuild(){words=[].concat(custom.items.slice().sort(function(a,b){return ((+b.at||0)-(+a.at||0))||((+b.id||0)-(+a.id||0));}).map(function(c){return{id:c.id,en:c.en,kj:c.kj||'',mn:c.mn,t:c.t||'X',ex:c.ex||'',custom:true,b:c.b||'old',at:+c.at||0};})).concat(shared.map(function(w){return{id:'s_'+w.docId,docId:w.docId,en:w.en,mn:w.mn,t:(['F','S','C'].indexOf(w.t)>-1?w.t:'Y'),ex:w.ex,by:w.by,shared:true};}));baseAfter();}
+function rebuild(){words=[].concat(custom.items.slice().sort(function(a,b){return ((+b.at||0)-(+a.at||0))||((+a.sq||0)-(+b.sq||0))||((+a.id||0)-(+b.id||0));}).map(function(c){return{id:c.id,en:c.en,kj:c.kj||'',mn:c.mn,t:c.t||'X',ex:c.ex||'',custom:true,b:c.b||'old',at:+c.at||0,sq:+c.sq||0};})).concat(shared.map(function(w){return{id:'s_'+w.docId,docId:w.docId,en:w.en,mn:w.mn,t:(['F','S','C'].indexOf(w.t)>-1?w.t:'Y'),ex:w.ex,by:w.by,shared:true};}));baseAfter();words=numOrder().reverse();}
 function baseAfter(){if(!(who&&!who.owner)){var ids={};words.forEach(function(w){ids[w.id]=1;});BASE.forEach(function(w){if(!ids[w.id])words.push(Object.assign({},w,{b:'base',at:0}));});}}
 function byId(id){id=String(id);for(var i=0;i<words.length;i++){if(String(words[i].id)===id)return words[i];}}
 rebuild();
@@ -1412,7 +1425,9 @@ function streakOf(log){
   return n;
 }
 function streakName(n){if(who&&slugName(n)===slugName(who.name))return streak();var t=team.filter(function(x){return slugName(x.name)===slugName(n);})[0];return t?streakOf(t.dlog):0;}
-function stkHTML(n){var k=streakName(n);return k?'<span class="skc on sm">'+ico('flame','ff')+'<b>'+k+'</b><span>day streak</span></span>':'';}
+function memOf(n){if(who&&slugName(n)===slugName(who.name)){var c=0;words.forEach(function(w){if(done[w.id])c++;});return c;}var t=team.filter(function(x){return slugName(x.name)===slugName(n);})[0];return t?(t.known||0):0;}
+function stkHTML(n){return '<span class="stkrow">'+stk1(n)+'<span class="memc">'+ico('badge')+'<b>'+memOf(n)+'</b><span>words</span></span></span>';}
+function stk1(n){var k=streakName(n);return k?'<span class="skc on sm">'+ico('flame','ff')+'<b>'+k+'</b><span>day streak</span></span>':'';}
 function streak(){
   var n=0,dt=new Date();
   var r=days.log[dkey(dt)];
@@ -1483,12 +1498,12 @@ function addWord(en,mn,t,ex,seen,kj,bid){
   if(hasWord(en)||(seen&&seen[k]))return Promise.resolve('dup');
   if(seen)seen[k]=1;
   if(wantShare())return addShared(en,mn,t,ex);
-  custom.items.push({id:custom.next++,en:en,kj:kj,mn:mn,t:t||'X',ex:exMark(en,ex),b:bid||('d'+dkey(new Date())),at:Date.now()+(seen&&seen.__n!=null?-(seen.__n++):0)});
+  custom.items.push({id:custom.next++,en:en,kj:kj,mn:mn,t:t||'X',ex:exMark(en,ex),b:bid||('d'+dkey(new Date())),at:(seen&&seen.__t)?seen.__t:Date.now(),sq:(seen&&seen.__n!=null)?seen.__n++:0});
   return Promise.resolve('ok');
 }
 function afterAdd(msg){saveCustom();schedulePush();rebuild();buildDeck(false);S.refocus=true;S.msg=msg;render();}
 function bulkAdd(){
-  var lines=$('#bulk').value.split(/\n/),seen={__n:0},jobs=[],bad=0,bid='b'+Date.now().toString(36);
+  var lines=$('#bulk').value.split(/\n/),seen={__n:0,__t:Date.now()},jobs=[],bad=0,bid='b'+Date.now().toString(36);
   lines.forEach(function(line){
     line=line.trim();if(!line)return;
     var en,mn,m=line.split(/\s+[-–—]\s+|\s*[=|\t:]\s*/);
@@ -1549,7 +1564,7 @@ function aiJSON(prompt,blobs){
 }
 SMPready=true;
 S.scan={st:'idle',items:[],thumb:'',msg:''};
-try{S.qmode=localStorage.getItem('sat-holboos-qmode')||'mean';S.cside=localStorage.getItem('sat-holboos-cside')||'jp';}catch(e){}
+try{S.setSize=+localStorage.getItem('sat-holboos-setsz')||50;S.qmode=localStorage.getItem('sat-holboos-qmode')||'mean';S.cside=localStorage.getItem('sat-holboos-cside')||'jp';}catch(e){}
 function scanHTML(){
   if(SMPready&&!SMP&&!SCAN_URL)return '';
   var sc=S.scan,h='<div class="scan">';
@@ -1702,35 +1717,44 @@ function packList(){
   });
   return out;
 }
-function setList(){var n=words.length,o=[];for(var i=0;i<n;i+=50)o.push({id:'s:'+(i/50),from:i+1,to:Math.min(n,i+50)});return o;}
+function numOrder(){var base=[],sh=[],cu=[];words.forEach(function(w){if(w.custom)cu.push(w);else if(w.shared)sh.push(w);else base.push(w);});
+  base.sort(function(a,b){return (+a.id||0)-(+b.id||0);});sh.sort(function(a,b){return a.id<b.id?-1:a.id>b.id?1:0;});
+  cu.sort(function(a,b){return ((a.at||0)-(b.at||0))||((a.sq||0)-(b.sq||0))||((+a.id||0)-(+b.id||0));});return base.concat(sh,cu);}
+function setSz(){var z=+S.setSize||50;return z>0?z:50;}
+function setList(){var n=words.length,z=setSz(),o=[];for(var i=0;i<n;i+=z)o.push({id:'s:'+z+':'+(i/z),from:i+1,to:Math.min(n,i+z)});return o;}
+function parseSet(sp){var m=/^s:(?:(\d+):)?(\d+)$/.exec(sp);if(m){var z=+(m[1]||50),k=+m[2];return{a:k*z,b:k*z+z};}m=/^r:(\d+)-(\d+)$/.exec(sp);if(m){var a=Math.max(1,+m[1]),b=Math.max(a,+m[2]);return{a:a-1,b:b};}return null;}
 function scopeWords(){
   var sp=S.pack||'all';
   if(sp.indexOf('b:')===0){var b=sp.slice(2);var r=words.filter(function(w){return (w.b||(w.shared?'shared':'base'))===b;});if(r.length)return r;}
-  if(sp.indexOf('s:')===0){var k=+sp.slice(2);var r2=words.slice(k*50,k*50+50);if(r2.length)return r2;}
+  var ps=parseSet(sp);if(ps){var r2=numOrder().slice(ps.a,ps.b).reverse();if(r2.length)return r2;}
   if(sp!=='all')S.pack='all';
   return words;
 }
-function scopeLabel(){var sp=S.pack||'all';if(sp==='all')return 'All words';if(sp.indexOf('s:')===0){var k=+sp.slice(2);return 'Words '+(k*50+1)+'–'+Math.min(words.length,k*50+50);}var pk=packList().filter(function(p){return p.id===sp;})[0];return pk?pk.label:'All words';}
+function scopeLabel(){var sp=S.pack||'all';if(sp==='all')return 'All words';var ps=parseSet(sp);if(ps)return 'Words '+(ps.a+1)+'–'+Math.min(words.length,ps.b);var pk=packList().filter(function(p){return p.id===sp;})[0];return pk?pk.label:'All words';}
 function packBar(){
   var sp=S.pack||'all',pk=packList(),st=setList();
   var chip=function(id,lbl,n){return '<button type="button" class="pchip'+(sp===id?' on':'')+'" data-a="pack" data-p="'+esc(id)+'"><span>'+esc(lbl)+'</span>'+(n!=null?'<b>'+n+'</b>':'')+'</button>';};
   var h='<div class="packbar"><div class="pkrow"><span class="pkl">Packs</span><div class="pks">'+chip('all','All words',words.length)+pk.map(function(p){return chip(p.id,p.label,p.n);}).join('')+'</div></div>';
-  if(st.length>1)h+='<div class="pkrow"><span class="pkl">Sets of 50</span><div class="pks">'+st.map(function(x){return chip(x.id,x.from+'–'+x.to,null);}).join('')+'</div></div>';
+  var z=setSz(),cps=parseSet(sp);
+  h+='<div class="pkrow"><span class="pkl">Set size</span><div class="pks">'+[10,20,25,30,50,100].map(function(n){return '<button type="button" class="pchip sz'+(z===n?' on':'')+'" data-a="setsz" data-z="'+n+'"><span>'+n+'</span></button>';}).join('')+'</div></div>';
+  if(st.length>1)h+='<div class="pkrow"><span class="pkl">Sets of '+z+'</span><div class="pks">'+st.map(function(x){return chip(x.id,x.from+'–'+x.to,null);}).join('')+'</div></div>';
+  h+='<div class="pkrow"><span class="pkl">Range</span><form class="rngf" id="rngf"><input id="rngA" type="number" inputmode="numeric" min="1" max="'+words.length+'" placeholder="from" value="'+(sp.indexOf('r:')===0&&cps?cps.a+1:'')+'"><span>–</span><input id="rngB" type="number" inputmode="numeric" min="1" max="'+words.length+'" placeholder="to" value="'+(sp.indexOf('r:')===0&&cps?cps.b:'')+'"><button type="submit" class="pchip'+(sp.indexOf('r:')===0?' on':'')+'"><span>Go</span></button></form></div>';
   return h+'</div>';
 }
 /* ---------- list ---------- */
+var WNUM={};function numWords(){WNUM={};numOrder().forEach(function(w,i){WNUM[w.id]=i+1;});}
 function row(w){
   var d=!!done[w.id];
   var canDel=w.custom||(w.shared&&((who&&w.by===who.name)||S.canDel));
   var by=(w.shared&&w.by)?'<small class="by">added by '+esc(w.by)+'</small>':'';
   return '<div class="item'+(d?' done':'')+(d&&S.only==='todo'?' hid':'')+'" data-id="'+esc(w.id)+'">'+
-    '<button class="word" data-a="peek"><span class="en">'+kjTag(w)+esc(w.en)+by+lvDots(w.id)+'</span><span class="peek">meaning</span><span class="mean">'+esc(w.mn)+'</span></button>'+
+    '<span class="wno">'+(WNUM[w.id]||'')+'</span><button class="word" data-a="peek"><span class="en">'+kjTag(w)+esc(w.en)+by+lvDots(w.id)+'</span><span class="peek">meaning</span><span class="mean">'+esc(w.mn)+'</span></button>'+
     (canDel?'<button class="del" data-a="del" aria-label="Delete: '+esc(w.en)+'">×</button>':'')+
     '<button class="chk" data-a="toggle" aria-pressed="'+d+'" aria-label="Memorized: '+esc(w.en)+'"><svg class="hrt" viewBox="-14 -13 28 28" aria-hidden="true"><use href="#heartp"></use></svg></button></div>';
 }
 function listBodyHTML(){
   var ord={F:0,S:1,C:2,X:3,Y:4},srt=function(x,y){return (ord[x.t]||0)-(ord[y.t]||0);};
-  var sw=scopeWords(),todo=sw.filter(function(w){return !done[w.id];}),got=sw.filter(function(w){return !!done[w.id];});
+  numWords();var sw=scopeWords(),todo=sw.filter(function(w){return !done[w.id];}),got=sw.filter(function(w){return !!done[w.id];});
   var n=words.length,k=got.length,pc=n?Math.round(k/n*100):0;
   var h='<div class="wrap'+(S.showAll?' all':'')+'" id="wrap">'+
     '<div class="rowbar" style="margin-bottom:6px"><span>Tap a word to see its meaning. Tap the star when you’ve memorized it.</span><button class="link" data-a="showall">'+(S.showAll?'Hide meanings':'Show all meanings')+'</button></div>';
@@ -1774,7 +1798,7 @@ function cardsHTML(){
       '<div class="actions"><button class="btn primary" data-a="restart">Again</button><button class="btn" data-a="csetup">Choose other cards</button></div></div>';
   }
   var w=C.deck[C.i];
-  var deco='<span class="type">'+TYPE[w.t]+' '+FORM[w.t]+'</span>';
+  numWords();var deco='<span class="type">#'+(WNUM[w.id]||'')+' · '+TYPE[w.t]+' '+FORM[w.t]+'</span>';
   var side=S.cside||'jp';
   var jpFront=w.kj?'<p class="big kjbig'+fitCls(w.kj)+'" lang="ja">'+esc(w.kj)+'</p><p class="hintline">Say the reading and meaning, then flip</p>':'<p class="big'+fitCls(w.en)+'">'+esc(w.en)+'</p>';
   var front=side==='mn'?'<p class="hintline">What is it in Japanese / English?</p><p class="big mn'+fitCls(w.mn)+'">'+esc(w.mn)+'</p>':jpFront;
@@ -1822,6 +1846,8 @@ function syncHead(){
   document.querySelectorAll('[data-tab]').forEach(function(b){b.setAttribute('aria-selected',String(b.dataset.tab===S.tab));});
   document.querySelectorAll('[data-only]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.only===S.only));});
 }
+function pickScope(){try{localStorage.setItem(sk('sat-holboos-pack'),S.pack);}catch(x){}if(S.tab==='list')refreshList();else if(S.tab==='cards'){buildDeck(false);render();}else{Q.phase='idle';render();}}
+document.addEventListener('submit',function(e){if(e.target.id!=='rngf')return;e.preventDefault();var a=parseInt($('#rngA').value,10),b=parseInt($('#rngB').value,10);if(!(a>0)||!(b>0))return;if(b<a){var t0=a;a=b;b=t0;}b=Math.min(b,words.length);S.pack='r:'+a+'-'+b;pickScope();});
 function centerChips(){document.querySelectorAll('.pks').forEach(function(r){var on=r.querySelector('.pchip.on');if(on)r.scrollLeft=Math.max(0,on.offsetLeft-r.offsetLeft-40);});}
 function render(){
   setTimeout(centerChips,0);setTimeout(function(){var qi=$('#qtin');if(qi)qi.focus();},30);syncHead();
@@ -1856,7 +1882,8 @@ document.addEventListener('click',function(e){
   }
   else if(a==='gorev'){S.tab='cards';S.only='due';buildDeck(false);C.started=true;render();}
   else if(a==='lv'){S.lv=t.dataset.v;refreshList();}
-  else if(a==='pack'){S.pack=t.dataset.p;try{localStorage.setItem(sk('sat-holboos-pack'),S.pack);}catch(x){}if(S.tab==='list')refreshList();else if(S.tab==='cards'){buildDeck(false);render();}else{Q.phase='idle';render();}}
+  else if(a==='setsz'){S.setSize=+t.dataset.z;try{localStorage.setItem('sat-holboos-setsz',S.setSize);}catch(x){}if((S.pack||'').indexOf('s:')===0)S.pack='s:'+S.setSize+':0';pickScope();}
+  else if(a==='pack'){S.pack=t.dataset.p;pickScope();}
   else if(a==='qmode'){S.qmode=t.dataset.m;try{localStorage.setItem('sat-holboos-qmode',S.qmode);}catch(x){}render();}
   else if(a==='cside'){S.cside=t.dataset.m;try{localStorage.setItem('sat-holboos-cside',S.cside);}catch(x){}C.back=false;render();}
   else if(a==='reveal'){var rv=t.closest('.qwrap');if(rv)rv.classList.add('shown');}
@@ -1974,7 +2001,7 @@ var lastAct=Date.now(),tickN=0,lastPushed='',pbusy=false,pushT=null;
 function myProgress(){
   var k=0;words.forEach(function(w){if(done[w.id])k++;});
   var dl={};Object.keys(days.log).sort().slice(-60).forEach(function(d){dl[d]=days.log[d];});
-  return{srs:(function(){var o={},n=0;for(var k in SRS){if(n++>800)break;var r=SRS[k];o[k]=[r.l,Math.round(r.d/6e4),Math.round((r.u||0)/6e4)];}return o;})(),name:who.name,dn:myDn(),av:(myAva().length<40000?myAva():''),done:Object.keys(done),known:k,total:words.length,sec:tm.total,tdays:tm.days,dlog:dl,goal:days.goal,pts:quiz.pts,rounds:quiz.rounds,best:quiz.best,g2048:G.best||0,last:Date.now(),dv:dv,wv:custom.v||0,cnext:custom.next,words:custom.items.slice(0,600).map(function(c){return{id:c.id,en:String(c.en).slice(0,80),kj:String(c.kj||'').slice(0,40),mn:String(c.mn).slice(0,120),t:c.t||'X',ex:String(c.ex||'').slice(0,200),b:String(c.b||'old').slice(0,30),at:+c.at||0};})};
+  return{srs:(function(){var o={},n=0;for(var k in SRS){if(n++>800)break;var r=SRS[k];o[k]=[r.l,Math.round(r.d/6e4),Math.round((r.u||0)/6e4)];}return o;})(),name:who.name,dn:myDn(),av:(myAva().length<40000?myAva():''),done:Object.keys(done),known:k,total:words.length,sec:tm.total,tdays:tm.days,dlog:dl,goal:days.goal,pts:quiz.pts,rounds:quiz.rounds,best:quiz.best,g2048:G.best||0,last:Date.now(),dv:dv,wv:custom.v||0,cnext:custom.next,words:custom.items.slice(0,600).map(function(c){return{id:c.id,en:String(c.en).slice(0,80),kj:String(c.kj||'').slice(0,40),mn:String(c.mn).slice(0,120),t:c.t||'X',ex:String(c.ex||'').slice(0,200),b:String(c.b||'old').slice(0,30),at:+c.at||0,sq:+c.sq||0};})};
 }
 function pushProgress(force){
   if(!who||!DB||!S.canWrite||pbusy)return;
@@ -2000,7 +2027,7 @@ function mergeRemote(x){
   if(!x)return;
   var rdv=+x.dv||0,rwv=+x.wv||0;
   if(Array.isArray(x.words)&&(rwv>(custom.v||0)||(!custom.items.length&&x.words.length))){
-    custom.items=x.words.filter(function(c){return c&&c.en&&c.mn;}).map(function(c){return{id:c.id,en:String(c.en),kj:String(c.kj||''),mn:String(c.mn),t:String(c.t||'X'),ex:String(c.ex||''),b:String(c.b||'old'),at:+c.at||0};});
+    custom.items=x.words.filter(function(c){return c&&c.en&&c.mn;}).map(function(c){return{id:c.id,en:String(c.en),kj:String(c.kj||''),mn:String(c.mn),t:String(c.t||'X'),ex:String(c.ex||''),b:String(c.b||'old'),at:+c.at||0,sq:+c.sq||0};});
     custom.next=Math.max(+x.cnext||0,custom.next||1000);custom.v=rwv;saveCustom(true);rebuild();
   }
   var rd=Array.isArray(x.done)?x.done:[];
@@ -2052,6 +2079,7 @@ function buildQ(w,mode,pool){
   return{w:w,mode:mode,opts:shuffle(opts)};
 }
 function rotKey(mode){return sk('sat-holboos-rot')+'|'+(S.pack||'all')+'|'+mode;}
+function qSize(){var sp=S.pack||'all';return parseSet(sp)?Math.min(100,scopeWords().length):QSIZE;}
 function startQuiz(){
   var sw=scopeWords(),mode=curMode(sw);
   var pool=mode==='read'?sw.filter(function(w){return w.kj;}):sw;
@@ -2059,8 +2087,8 @@ function startQuiz(){
   var q=[];try{q=JSON.parse(localStorage.getItem(rotKey(mode))||'[]');}catch(e){}
   q=q.filter(function(id){return ids[id];});
   // every word is asked once before any word repeats
-  if(q.length<Math.min(QSIZE,pool.length)){var have={};q.forEach(function(id){have[id]=1;});var rest=shuffle(pool.filter(function(w){return !have[w.id];})).map(function(w){return w.id;});q=q.concat(rest);}
-  var take=q.slice(0,QSIZE),left=q.slice(QSIZE);
+  var QS=qSize();if(q.length<Math.min(QS,pool.length)){var have={};q.forEach(function(id){have[id]=1;});var rest=shuffle(pool.filter(function(w){return !have[w.id];})).map(function(w){return w.id;});q=q.concat(rest);}
+  var take=q.slice(0,QS),left=q.slice(QS);
   try{localStorage.setItem(rotKey(mode),JSON.stringify(left));}catch(e){}
   Q.left=left.length;Q.total=pool.length;
   Q.qs=shuffle(take).map(function(id){return buildQ(byId(id),mode,pool);}).filter(function(x){return x.w;});
@@ -2104,7 +2132,7 @@ function quizKey(e){
   else if(e.key==='Enter'&&Q.picked!==null){quizNext();e.preventDefault();}
 }
 function quizHTML(){
-  var sw=scopeWords(),mode=curMode(sw),pool=mode==='read'?sw.filter(function(w){return w.kj;}):sw,n=Math.min(QSIZE,pool.length);
+  var sw=scopeWords(),mode=curMode(sw),pool=mode==='read'?sw.filter(function(w){return w.kj;}):sw,n=Math.min(qSize(),pool.length);
   if(words.length<4)return '<div class="panel"><h2>Quiz</h2><p>You need at least 4 words to take a quiz. Go to “Word list” and add some words.</p></div>';
   if(Q.phase==='idle'){
     var left=0;try{left=JSON.parse(localStorage.getItem(rotKey(mode))||'[]').length;}catch(e){}
@@ -2116,7 +2144,7 @@ function quizHTML(){
       (pool.length<4?'<p class="lempty">This pack needs at least 4 words for this mode.</p>':'<button class="btn primary big" data-a="qstart">Start · '+n+' questions</button>')+'</div>';
   }
   if(Q.phase==='end'){
-    return '<div class="panel"><p class="hintline">Result</p><p class="qscore">'+Q.score+' / '+Q.qs.length+'</p><p><b>+'+Q.gain+' points</b> earned. Total: <b>'+quiz.pts+'</b></p>'+(Q.miss.length?'<div class="qmiss"><b>Review these '+Q.miss.length+' word'+(Q.miss.length>1?'s':'')+'</b>'+Q.miss.map(function(id){var mw=byId(id);return mw?'<div class="qmr">'+(mw.kj?'<span lang="ja" class="qck">'+esc(mw.kj)+'</span>':'')+'<span class="qcr">'+esc(mw.en)+'</span><span class="qcm">'+esc(mw.mn)+'</span>'+sayBtn(mw.id)+'</div>':'';}).join('')+'<small>They come first in your next round and in today’s flashcard review.</small></div>':'')+'<p class="qcyc">'+(Q.left?Q.left+' words still to ask in this cycle.':'Cycle complete: every word in this set was asked!')+'</p><div class="actions"><button class="btn primary" data-a="qagain">Next '+Math.min(QSIZE,pool.length)+'</button><button class="btn" data-a="qback">Change pack or mode</button></div></div>';
+    return '<div class="panel"><p class="hintline">Result</p><p class="qscore">'+Q.score+' / '+Q.qs.length+'</p><p><b>+'+Q.gain+' points</b> earned. Total: <b>'+quiz.pts+'</b></p>'+(Q.miss.length?'<div class="qmiss"><b>Review these '+Q.miss.length+' word'+(Q.miss.length>1?'s':'')+'</b>'+Q.miss.map(function(id){var mw=byId(id);return mw?'<div class="qmr">'+(mw.kj?'<span lang="ja" class="qck">'+esc(mw.kj)+'</span>':'')+'<span class="qcr">'+esc(mw.en)+'</span><span class="qcm">'+esc(mw.mn)+'</span>'+sayBtn(mw.id)+'</div>':'';}).join('')+'<small>They come first in your next round and in today’s flashcard review.</small></div>':'')+'<p class="qcyc">'+(Q.left?Q.left+' words still to ask in this cycle.':'Cycle complete: every word in this set was asked!')+'</p><div class="actions"><button class="btn primary" data-a="qagain">Next '+Math.min(qSize(),pool.length)+'</button><button class="btn" data-a="qback">Change pack or mode</button></div></div>';
   }
   var q=Q.qs[Q.i],w=q.w,L=['A','B','C','D'];
   var opts=q.opts.map(function(o,i){
@@ -2134,7 +2162,7 @@ function quizHTML(){
     var card='<div class="qcard">'+(w.kj?'<b lang="ja" class="qck">'+esc(w.kj)+'</b>':'')+'<b class="qcr">'+esc(w.en)+'</b><span class="qcm">'+esc(w.mn)+'</span>'+sayBtn(w.id)+'</div>';
     fb='<div class="qfb"><div class="v '+(ok?'ok':'no')+'">'+(ok?'Correct! +'+QPTS+' points':'Not quite. Remember this one:')+'</div>'+card+(w.ex?'<p class="ex">'+hl(w)+'</p>':'')+'<button class="btn primary" data-a="qnext">'+(Q.i+1>=Q.qs.length?'See result':'Next →')+'</button></div>';
   }
-  return '<div class="panel"><div class="qhead"><span>'+(Q.i+1)+' / '+Q.qs.length+'</span><span>Points: '+Q.gain+'</span></div><div class="tbar"><span style="width:'+Math.round(Q.i/Q.qs.length*100)+'%"></span></div>'+qPrompt(q)+'<div class="qopts">'+opts+'</div>'+fb+'</div>';
+  numWords();return '<div class="panel"><div class="qhead"><span>'+(Q.i+1)+' / '+Q.qs.length+' <small class="qno">#'+(WNUM[w.id]||'')+'</small></span><span>Points: '+Q.gain+'</span></div><div class="tbar"><span style="width:'+Math.round(Q.i/Q.qs.length*100)+'%"></span></div>'+qPrompt(q)+'<div class="qopts">'+opts+'</div>'+fb+'</div>';
 }
 function qPrompt(q){
   var w=q.w,ans=Q.picked!==null;
